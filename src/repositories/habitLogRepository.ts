@@ -1,4 +1,5 @@
 import { db } from '../database/db';
+import { generateId } from '../utils/id';
 
 export interface HabitLog {
   id: string;
@@ -13,7 +14,7 @@ function today(): string {
 
 export const habitLogRepository = {
   logCompletion(habitId: string): void {
-    const id = crypto.randomUUID();
+    const id = generateId();
     const now = new Date().toISOString();
     db.runSync(
       `INSERT OR IGNORE INTO habit_logs (id, habit_id, completed_date, created_at)

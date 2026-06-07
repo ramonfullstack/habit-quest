@@ -1,7 +1,7 @@
 import '../../global.css';
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { Alert, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { runMigrations } from '../database/migrations';
 import { useHabitStore } from '../stores/habitStore';
@@ -16,7 +16,14 @@ export default function RootLayout() {
   const loadProgress = useProgressStore((s) => s.loadProgress);
 
   useEffect(() => {
-    runMigrations();
+    const migrated = runMigrations();
+    if (!migrated) {
+      Alert.alert(
+        'Erro no banco local',
+        'Nao foi possivel preparar o banco local. Reinicie o app para tentar novamente.'
+      );
+      return;
+    }
     loadHabits();
     loadProgress();
     hydrate();

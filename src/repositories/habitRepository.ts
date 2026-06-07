@@ -1,5 +1,6 @@
 import { db } from '../database/db';
 import type { SQLiteBindParams } from 'expo-sqlite';
+import { generateId } from '../utils/id';
 
 export type Frequency = 'daily' | 'weekly';
 
@@ -37,7 +38,7 @@ export const habitRepository = {
   },
 
   create(input: CreateHabitInput): Habit {
-    const id = crypto.randomUUID();
+    const id = generateId();
     const now = new Date().toISOString();
     db.runSync(
       `INSERT INTO habits (id, title, description, frequency, reminder_time, active, created_at)
