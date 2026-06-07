@@ -28,8 +28,6 @@
     "plugins": [
       ["expo-router", { "root": "src/app" }],
       "expo-sqlite",
-      "expo-sharing",
-      "expo-status-bar",
       [
         "expo-notifications",
         {
