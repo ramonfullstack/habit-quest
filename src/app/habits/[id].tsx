@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, ScrollView, TouchableOpacity, Switch, Platform, Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { habitRepository, Frequency } from '../../repositories/habitRepository';
 import { useHabitStore } from '../../stores/habitStore';
 import { Button } from '../../components/Button';
@@ -11,6 +12,19 @@ import {
   cancelHabitReminder,
   requestNotificationPermissions,
 } from '../../hooks/useNotifications';
+
+function formatTime(date: Date): string {
+  const hh = `${date.getHours()}`.padStart(2, '0');
+  const mm = `${date.getMinutes()}`.padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function parseTime(time: string): Date {
+  const [hour, minute] = time.split(':').map((v) => parseInt(v, 10));
+  const date = new Date();
+  date.setHours(Number.isNaN(hour) ? 8 : hour, Number.isNaN(minute) ? 0 : minute, 0, 0);
+  return date;
+}
 
 export default function EditHabitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,8 +36,18 @@ export default function EditHabitScreen() {
   const [frequency, setFrequency] = useState<Frequency>('daily');
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState('08:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationId, setNotificationId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  function onTimeChange(event: DateTimePickerEvent, selectedDate?: Date) {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (event.type === 'set' && selectedDate) {
+      setReminderTime(formatTime(selectedDate));
+    }
+  }
 
   useEffect(() => {
     const habit = habitRepository.getById(id);
@@ -157,16 +181,34 @@ export default function EditHabitScreen() {
         </View>
         {reminderEnabled && (
           <View className="mt-3">
-            <Text className="text-xs text-gray-500 dark:text-gray-400 mb-1">Horário (HH:MM)</Text>
-            <TextInput
-              value={reminderTime}
-              onChangeText={setReminderTime}
-              placeholder="08:00"
-              placeholderTextColor="#9ca3af"
-              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-              className="bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-base"
-              maxLength={5}
-            />
+            <Text className="text-xs text-gray-500 dark:text-gray-400 mb-1">Horário</Text>
+
+            <TouchableOpacity
+              onPress={() => setShowTimePicker(true)}
+              className="bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2"
+            >
+              <Text className="text-gray-900 dark:text-white text-base">{reminderTime}</Text>
+            </TouchableOpacity>
+
+            {showTimePicker && (
+              <View className="mt-2">
+                <DateTimePicker
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  value={parseTime(reminderTime)}
+                  onChange={onTimeChange}
+                  is24Hour
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    onPress={() => setShowTimePicker(false)}
+                    className="self-end mt-2 px-3 py-1.5 rounded-lg bg-primary-500"
+                  >
+                    <Text className="text-white text-sm font-semibold">Confirmar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
         )}
       </View>
